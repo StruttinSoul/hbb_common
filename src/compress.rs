@@ -38,7 +38,7 @@ pub fn decompress(data: &[u8]) -> Vec<u8> {
     decompress_with_limit(data, MAX_DECOMPRESSED_SIZE).unwrap_or_default()
 }
 
-fn decompress_with_limit(data: &[u8], limit: usize) -> io::Result<Vec<u8>> {
+pub fn decompress_with_limit(data: &[u8], limit: usize) -> io::Result<Vec<u8>> {
     let decoder = zstd::Decoder::new(data)?;
     let mut output = Vec::new();
     decoder

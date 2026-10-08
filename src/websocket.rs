@@ -640,7 +640,10 @@ mod tests {
         ws.set_max_packet_length(CAP);
 
         // One byte over, header only: refused before there is any payload to buffer.
-        server.write_all(&ws_binary_frame(CAP + 1, false)).await.unwrap();
+        server
+            .write_all(&ws_binary_frame(CAP + 1, false))
+            .await
+            .unwrap();
         match timeout(Duration::from_secs(5), ws.next()).await {
             Ok(Some(Err(e))) => assert!(e.to_string().contains("Message too long"), "{}", e),
             Ok(other) => panic!(
@@ -657,18 +660,28 @@ mod tests {
         let (mut ws, mut server) = ws_loopback().await;
 
         ws.set_max_packet_length(CAP);
-        server.write_all(&ws_binary_frame(8 * 1024, true)).await.unwrap();
+        server
+            .write_all(&ws_binary_frame(8 * 1024, true))
+            .await
+            .unwrap();
         let got = ws.next().await.unwrap().unwrap();
         assert_eq!(got.len(), 8 * 1024, "a message under the cap still arrives");
 
         ws.set_max_packet_length(usize::MAX);
-        server.write_all(&ws_binary_frame(200_000, true)).await.unwrap();
+        server
+            .write_all(&ws_binary_frame(200_000, true))
+            .await
+            .unwrap();
         let got = timeout(Duration::from_secs(5), ws.next())
             .await
             .expect("next() hung after the cap was lifted")
             .unwrap()
             .unwrap();
-        assert_eq!(got.len(), 200_000, "lifting the cap lets a large message through again");
+        assert_eq!(
+            got.len(),
+            200_000,
+            "lifting the cap lets a large message through again"
+        );
     }
 
     // Two frames each under the cap that reassemble to a message over it: the frame bound lets
@@ -680,8 +693,14 @@ mod tests {
         ws.set_max_packet_length(CAP);
 
         // Binary with FIN clear, then a continuation with FIN set: 12 KiB each, 24 KiB together.
-        server.write_all(&ws_frame(0x02, 12 * 1024, true)).await.unwrap();
-        server.write_all(&ws_frame(0x80, 12 * 1024, true)).await.unwrap();
+        server
+            .write_all(&ws_frame(0x02, 12 * 1024, true))
+            .await
+            .unwrap();
+        server
+            .write_all(&ws_frame(0x80, 12 * 1024, true))
+            .await
+            .unwrap();
         match timeout(Duration::from_secs(5), ws.next()).await {
             Ok(Some(Err(e))) => assert!(e.to_string().contains("Message too long"), "{}", e),
             Ok(other) => panic!(
